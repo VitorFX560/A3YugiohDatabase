@@ -29,7 +29,7 @@ const fetchAndDisplayDecks = async () => {
 
     try {
         // 1. Consulta apenas a coleção principal de 'Decks'
-        const decksCollectionRef = collection(db, 'Decks');
+        const decksCollectionRef = collection(db,'Decks');
         console.log(`[DEBUG] Buscando documentos na coleção: Decks`);
         const queryDecksSnapshot = await getDocs(decksCollectionRef);
 
