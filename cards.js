@@ -1,7 +1,3 @@
-
-
-// Importações do Firebase SDK usando os URLs completos da CDN
-// Garanta que a versão (ex: 10.12.2) seja a mesma que você usa no seu index.html
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -17,6 +13,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 
 // Variável global para armazenar o ID do deck atualmente selecionado pelo usuário
 let currentSelectedDeckId = null;
@@ -229,17 +226,6 @@ const handleCardSearch = async () => {
         cardDetailsElement.innerHTML = '<p class="text-red-500">Por favor, digite o nome do card.</p>';
         return;
     }
-
-    // --- IMPORTANTE PARA DEPURAR ReferenceError: doc ---
-    // Este log vai nos dizer se 'doc' está realmente definido neste ponto da execução.
-    // Se ainda for 'undefined', o problema é no carregamento do módulo Firebase.
-    if (typeof doc === 'undefined') {
-        console.error("ERRO CRÍTICO DE MÓDULO: A função 'doc' do Firebase não foi carregada corretamente. Por favor, tente um 'hard refresh' no navegador (Ctrl+Shift+R ou Cmd+Shift+R).");
-        cardDetailsElement.innerHTML = '<p class="text-red-500">Erro interno ao buscar card. Tente recarregar a página.</p>';
-        return;
-    }
-    // FIM DA DEPURACAO DE 'doc'
-
 
     const cardTypesToSearch = ['Monstros', 'Magia', 'Armadilhas'];
     let cardFound = false;

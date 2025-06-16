@@ -1,0 +1,100 @@
+
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Cards Yu-Gi-Oh!</title>
+    <!-- Inclui Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a fonte Inter para uma tipografia moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos personalizados para cantos arredondados e sombras */
+        .rounded-xl { border-radius: 0.75rem; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-8 space-y-8">
+        <h1 class="text-4xl font-bold text-center text-blue-800 border-b-4 border-blue-600 pb-4 mb-8">Meus Cards</h1>
+
+        <!-- Seção para Seleção de Decks -->
+        <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">Selecionar Deck</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <input type="text" id="deck-selection-input" placeholder="Digite o nome do Deck (ex: Old Blue-Eyes Deck)"
+                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="select-deck-button"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out">
+                    Selecionar
+                </button>
+            </div>
+            <!-- Mensagens de feedback para a seleção do deck (erro/sucesso) -->
+            <p id="deck-selection-message" class="text-red-500 text-sm mb-2 hidden"></p>
+            <!-- Exibe o nome do deck atualmente selecionado -->
+            <p id="selected-deck-display" class="mt-4 text-lg font-medium text-gray-800">
+                Deck Selecionado: <span class="text-blue-600 font-bold" id="current-selected-deck">Nenhum</span>
+            </p>
+            <!-- Dica para o usuário com os decks disponíveis -->
+            <p class="text-gray-600 text-sm mt-2">Decks disponíveis: <span id="available-decks-hint">Carregando...</span></p>
+        </div>
+
+        <!-- Seção de Busca de Card -->
+        <div class="bg-green-50 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold text-green-700 mb-4">Buscar Card</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                <input type="text" id="card-search-input" placeholder="Digite o nome do Card"
+                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button id="search-card-button"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out">
+                    Buscar
+                </button>
+            </div>
+            <!-- Área onde os detalhes do card buscado serão exibidos -->
+            <div id="card-details" class="bg-white p-4 rounded-lg border border-green-200 min-h-[100px] flex items-center justify-center text-gray-700">
+                <p>Nenhum card selecionado para exibição.</p>
+            </div>
+        </div>
+
+        <!-- Seção de Listagem de Cards por Tipo (para o deck selecionado) -->
+        <div id="card-lists-container" class="bg-purple-50 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">Cards do Deck Selecionado</h2>
+            <!-- Mensagem de carregamento ou instrução para selecionar um deck -->
+            <p id="loading-cards-message" class="text-gray-600">Selecione um deck para carregar os cards...</p>
+            
+            <!-- Seção para Cards de Monstros -->
+            <div id="monstros-section" class="hidden mt-6">
+                <h3 class="text-xl font-bold text-purple-800 mb-2">Monstros: <span id="monstros-count" class="text-purple-600">0</span></h3>
+                <ul id="monstros-list" class="list-disc list-inside text-gray-700 ml-4 space-y-1">
+                    <!-- Cards de Monstros serão listados aqui pelo JavaScript -->
+                </ul>
+            </div>
+
+            <!-- Seção para Cards de Magia -->
+            <div id="magia-section" class="hidden mt-6">
+                <h3 class="text-xl font-bold text-purple-800 mb-2">Magia: <span id="magia-count" class="text-purple-600">0</span></h3>
+                <ul id="magia-list" class="list-disc list-inside text-gray-700 ml-4 space-y-1">
+                    <!-- Cards de Magia serão listados aqui pelo JavaScript -->
+                </ul>
+            </div>
+
+            <!-- Seção para Cards de Armadilhas -->
+            <div id="armadilhas-section" class="hidden mt-6">
+                <h3 class="text-xl font-bold text-purple-800 mb-2">Armadilhas: <span id="armadilhas-count" class="text-purple-600">0</span></h3>
+                <ul id="armadilhas-list" class="list-disc list-inside text-gray-700 ml-4 space-y-1">
+                    <!-- Cards de Armadilhas serão listados aqui pelo JavaScript -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link para o arquivo JavaScript que conterá toda a lógica -->
+    <script type="module" src="cards.js"></script>
+
+</body>
+</html>
