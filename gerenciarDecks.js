@@ -10,7 +10,7 @@ const serviceAccount = JSON.parse(
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 const db = admin.firestore();
 
-// Retorna todos os IDs de deck sob a coleção 'Decks' 
+// Retorna todos os deck sob a coleção 'Decks' 
 async function listarDecks() {
   const snap = await db.collection('Decks').get();
   return snap.docs.map(doc => doc.id);

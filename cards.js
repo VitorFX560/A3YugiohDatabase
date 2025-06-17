@@ -1,63 +1,103 @@
-// cards.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
-import {
-getFirestore,
-  collection,
-  getDocs,
-  doc,
-  getDoc
-} from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+import {getAuth, onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword, signOut} from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+import { getFirestore,collection,getDocs,doc, getDoc} from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
 
-// → Sua configuração do Firebase (troque pelos valores do seu projeto)
+// acesso fire base
 const firebaseConfig = {
-  apiKey:      "AIzaSyDhVyOHZWAKBvDVE1B5IHHECoYZLIyQs78",
-  authDomain:  "myyugiohdeckbase.firebaseapp.com",
-  projectId:   "myyugiohdeckbase",
-  storageBucket:"myyugiohdeckbase.firebasestorage.app",
+  apiKey:            "AIzaSyDhVyOHZWAKBvDVE1B5IHHECoYZLIyQs78",
+  authDomain:        "myyugiohdeckbase.firebaseapp.com",
+  projectId:         "myyugiohdeckbase",
+  storageBucket:     "myyugiohdeckbase.appspot.com",
   messagingSenderId: "47070645186",
-  appId:       "1:47070645186:web:b98d1c621583e65483245b"
+  appId:             "1:47070645186:web:b98d1c621583e65483245b"
 };
-
-// Inicializa o SDK cliente
 initializeApp(firebaseConfig);
-const db = getFirestore();
+const auth = getAuth();
+const db   = getFirestore();
 
-// Referências de DOM (confira que batem com o seu HTML)
-const deckSelectionInput    = document.getElementById('deck-selection-input');
-const selectDeckButton      = document.getElementById('select-deck-button');
-const deckSelectionMessage  = document.getElementById('deck-selection-message');
-const availableDecksHint    = document.getElementById('available-decks-hint');
-const currentSelectedDeck   = document.getElementById('current-selected-deck');
-const loadingCardsMessage   = document.getElementById('loading-cards-message');
+// Processos
+const authUi           = document.getElementById('auth-ui');
+const appUi            = document.getElementById('app-ui');
+const authMessage      = document.getElementById('auth-message');
+const btnShowLogin     = document.getElementById('show-login');
+const btnShowRegister  = document.getElementById('show-register');
+const loginForm        = document.getElementById('login-form');
+const registerForm     = document.getElementById('register-form');
+const loginEmail       = document.getElementById('login-email');
+const loginPass        = document.getElementById('login-pass');
+const regEmail         = document.getElementById('reg-email');
+const regPass          = document.getElementById('reg-pass');
+const btnLogout        = document.getElementById('btn-logout');
 
+const deckInput        = document.getElementById('deck-selection-input');
+const btnSelectDeck    = document.getElementById('select-deck-button');
+const decksHint        = document.getElementById('available-decks-hint');
+const selectDeckMsg    = document.getElementById('deck-selection-message');
+const currentDeckLabel = document.getElementById('current-selected-deck');
+
+const cardSearchInput  = document.getElementById('card-search-input');
+const btnSearchCard    = document.getElementById('search-card-button');
+const cardDetails      = document.getElementById('card-details');
+
+const loadingCardsMsg  = document.getElementById('loading-cards-message');
 const monstrosSection  = document.getElementById('monstros-section');
 const monstrosCount    = document.getElementById('monstros-count');
 const monstrosList     = document.getElementById('monstros-list');
-
-const magiasSection    = document.getElementById('magia-section');
-const magiasCount      = document.getElementById('magia-count');
-const magiasList       = document.getElementById('magia-list');
-
+const magiaSection     = document.getElementById('magia-section');
+const magiaCount       = document.getElementById('magia-count');
+const magiaList        = document.getElementById('magia-list');
 const armadilhasSection= document.getElementById('armadilhas-section');
 const armadilhasCount  = document.getElementById('armadilhas-count');
 const armadilhasList   = document.getElementById('armadilhas-list');
 
-const cardSearchInput  = document.getElementById('card-search-input');
-const searchCardButton = document.getElementById('search-card-button');
-const cardDetails      = document.getElementById('card-details');
-
 let currentDeckId = null;
 
-// 1) Carrega e exibe todos os decks existentes
-async function loadAvailableDecks() {
+// alterna visibilidade dos formulários
+btnShowLogin.onclick    = () => { registerForm.classList.add('hidden'); loginForm.classList.toggle('hidden'); authMessage.textContent=''; };
+btnShowRegister.onclick = () => { loginForm.classList.add('hidden'); registerForm.classList.toggle('hidden'); authMessage.textContent=''; };
+
+// login
+loginForm.onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await signInWithEmailAndPassword(auth, loginEmail.value, loginPass.value);
+  } catch (err) {
+    authMessage.textContent = err.message;
+  }
+};
+
+// registro
+registerForm.onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await createUserWithEmailAndPassword(auth, regEmail.value, regPass.value);
+  } catch (err) {
+    authMessage.textContent = err.message;
+  }
+};
+
+// logout
+btnLogout.onclick = () => signOut(auth);
+
+// observa mudança de estado
+onAuthStateChanged(auth, user => {
+  if (user) {
+    authUi.classList.add('hidden');
+    appUi.classList.remove('hidden');
+    loadDecks();
+  } else {
+    appUi.classList.add('hidden');
+    authUi.classList.remove('hidden');
+  }
+});
+
+async function loadDecks() {
   const snap = await getDocs(collection(db, 'Decks'));
-  const ids  = snap.docs.map(d => d.id);
-  availableDecksHint.textContent = ids.join(' • ');
+  decksHint.textContent = snap.docs.map(d => d.id).join(' • ');
 }
 
-// 2) Dado um caminho, carrega a coleção e preenche a lista
-async function loadCards(pathSegments, countEl, listEl, sectionEl) {
-  const snap = await getDocs(collection(db, ...pathSegments));
+async function loadCards(path, countEl, listEl, sectionEl) {
+  const snap = await getDocs(collection(db, ...path));
   countEl.textContent = snap.size;
   listEl.innerHTML = '';
   snap.docs.forEach(d => {
@@ -68,53 +108,46 @@ async function loadCards(pathSegments, countEl, listEl, sectionEl) {
   sectionEl.classList.remove('hidden');
 }
 
-// 3) Carrega todas as 3 categorias para o deck selecionado
-async function loadAllCategories() {
+async function loadAllCards() {
   if (!currentDeckId) return;
-  loadingCardsMessage.classList.remove('hidden');
-  [monstrosSection, magiasSection, armadilhasSection].forEach(sec => sec.classList.add('hidden'));
+  loadingCardsMsg.classList.remove('hidden');
+  [monstrosSection, magiaSection, armadilhasSection].forEach(s=>s.classList.add('hidden'));
 
-  await loadCards(['Decks', currentDeckId, 'Main Deck', 'Monstros',  'Cards'], monstrosCount,  monstrosList,  monstrosSection);
-  await loadCards(['Decks', currentDeckId, 'Main Deck', 'Magias',    'Cards'], magiasCount,   magiasList,    magiasSection);
-  await loadCards(['Decks', currentDeckId, 'Main Deck', 'Armadilhas','Cards'], armadilhasCount, armadilhasList, armadilhasSection);
+  await loadCards(
+    ['Decks', currentDeckId, 'Main Deck', 'Monstros',  'Cards'],
+    monstrosCount, monstrosList, monstrosSection
+  );
+  await loadCards(
+    ['Decks', currentDeckId, 'Main Deck', 'Magias',    'Cards'],
+    magiaCount,   magiaList,   magiaSection
+  );
+  await loadCards(
+    ['Decks', currentDeckId, 'Main Deck', 'Armadilhas','Cards'],
+    armadilhasCount, armadilhasList, armadilhasSection
+  );
 
-  loadingCardsMessage.classList.add('hidden');
+  loadingCardsMsg.classList.add('hidden');
 }
 
-// 4) Seleciona um deck, valida e chama loadAllCategories()
-async function handleDeckSelection() {
-  const id = deckSelectionInput.value.trim();
-  deckSelectionMessage.classList.add('hidden');
-
-  if (!id) {
-    deckSelectionMessage.textContent = 'Digite o ID de um deck.';
-    deckSelectionMessage.classList.remove('hidden', 'text-green-500');
-    deckSelectionMessage.classList.add('text-red-500');
-    return;
-  }
+// Selecionar deck
+btnSelectDeck.onclick = async () => {
+  selectDeckMsg.textContent = '';
+  const id = deckInput.value.trim();
+  if (!id) return selectDeckMsg.textContent = 'Digite um ID de deck.';
 
   const snap = await getDoc(doc(db, 'Decks', id));
-  if (!snap.exists()) {
-    deckSelectionMessage.textContent = `Deck "${id}" não encontrado.`;
-    deckSelectionMessage.classList.remove('hidden', 'text-green-500');
-    deckSelectionMessage.classList.add('text-red-500');
-    return;
-  }
+  if (!snap.exists()) return selectDeckMsg.textContent = `Deck "${id}" não encontrado.`;
 
   currentDeckId = id;
-  currentSelectedDeck.textContent = id;
-  deckSelectionMessage.textContent = `Deck "${id}" selecionado!`;
-  deckSelectionMessage.classList.remove('hidden', 'text-red-500');
-  deckSelectionMessage.classList.add('text-green-500');
+  currentDeckLabel.textContent = id;
+  selectDeckMsg.textContent = `Deck "${id}" selecionado!`;
+  await loadAllCards();
+};
 
-  await loadAllCategories();
-}
-
-// 5) Busca detalhes de um único card
-async function handleCardSearch() {
+// Buscar card
+btnSearchCard.onclick = async () => {
   const name = cardSearchInput.value.trim();
   cardDetails.innerHTML = '';
-
   if (!currentDeckId) {
     cardDetails.innerHTML = '<p class="text-red-500">Selecione um deck primeiro.</p>';
     return;
@@ -123,32 +156,16 @@ async function handleCardSearch() {
     cardDetails.innerHTML = '<p class="text-red-500">Digite o nome do card.</p>';
     return;
   }
-
-  // Tenta em cada categoria
   for (const grp of ['Monstros','Magias','Armadilhas']) {
-    const docRef = doc(db, 'Decks', currentDeckId, 'Main Deck', grp, 'Cards', name);
-    const snap   = await getDoc(docRef);
+    const snap = await getDoc(doc(db, 'Decks', currentDeckId, 'Main Deck', grp, 'Cards', name));
     if (snap.exists()) {
-      const data = snap.data();
       let html = `<h3 class="font-bold">${snap.id}</h3>`;
-      for (const [k,v] of Object.entries(data)) {
+      Object.entries(snap.data()).forEach(([k,v]) => {
         html += `<p><strong>${k}:</strong> ${v}</p>`;
-      }
+      });
       cardDetails.innerHTML = html;
       return;
     }
   }
-
   cardDetails.innerHTML = `<p class="text-yellow-600">Card "${name}" não encontrado.</p>`;
-}
-
-// --- Event Listeners ---
-document.addEventListener('DOMContentLoaded', loadAvailableDecks);
-selectDeckButton.addEventListener('click', handleDeckSelection);
-deckSelectionInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') handleDeckSelection();
-});
-searchCardButton.addEventListener('click', handleCardSearch);
-cardSearchInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') handleCardSearch();
-});
+};
