@@ -80,11 +80,21 @@ const getCollectionData = async (collectionRef) => {
  * Carrega e exibe os nomes de todos os decks disponíveis para servir como dica para o usuário.
  */
 const loadAvailableDecksHint = async () => {
+    console.log("Iniciando carregamento de decks disponíveis.");
+
     try {
-        // Ajusta o caminho da coleção para o padrão do ambiente Canvas para dados públicos
-        const decksCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'Decks');
+        // Caminho da coleção de decks na raiz do Firestore, conforme um projeto Firebase padrão.
+        const decksCollectionRef = collection(db, 'Decks');
         console.log("Tentando buscar decks do caminho:", decksCollectionRef.path);
         const queryDecksSnapshot = await getDocs(decksCollectionRef);
+
+        // --- NOVO DEBUG: Verificando o snapshot do Firestore ---
+        console.log(`[DEBUG - loadAvailableDecksHint] queryDecksSnapshot.empty: ${queryDecksSnapshot.empty}`);
+        console.log(`[DEBUG - loadAvailableDecksHint] Número de documentos recebidos do Firestore: ${queryDecksSnapshot.docs.length}`);
+        if (!queryDecksSnapshot.empty) {
+            console.log(`[DEBUG - loadAvailableDecksHint] IDs dos decks recebidos:`, queryDecksSnapshot.docs.map(doc => doc.id));
+        }
+        // --- FIM NOVO DEBUG ---
 
         if (queryDecksSnapshot.empty) {
             availableDecksHint.textContent = 'Nenhum deck encontrado.';
@@ -96,10 +106,13 @@ const loadAvailableDecksHint = async () => {
         allAvailableDeckIds = queryDecksSnapshot.docs.map(doc => doc.id);
         // Exibe os IDs dos decks como uma lista separada por vírgulas na dica
         availableDecksHint.textContent = allAvailableDeckIds.join(', ');
+        console.log("Decks disponíveis carregados com sucesso:", allAvailableDeckIds);
     }
     catch (error) {
         console.error('Erro ao carregar decks disponíveis para dica:', error);
-        availableDecksHint.textContent = 'Erro ao carregar decks.';
+        // Log do objeto de erro completo para depuração detalhada
+        console.error('Detalhes do erro ao carregar decks disponíveis:', error);
+        availableDecksHint.textContent = `Erro: ${error.message}. Verifique o console.`; // Mensagem de erro mais explícita na UI
     }
 };
 
@@ -173,16 +186,16 @@ const loadCardsForSelectedDeck = async () => {
         // Define os tipos de cards a serem buscados e os elementos HTML correspondentes
         const cardTypes = [
             { name: 'Monstros', countElement: monstrosCountElement, listElement: monstrosListElement, sectionElement: monstrosSection },
-            { name: 'Magia', countElement: magiaCountElement, listElement: magiaListElement, sectionElement: magiaSection },
+            { name: 'Magias', countElement: magiaCountElement, listElement: magiaListElement, sectionElement: magiaSection }, // Ajustado para 'Magias'
             { name: 'Armadilhas', countElement: armadilhasCountElement, listElement: armadilhasListElement, sectionElement: armadilhasSection }
         ];
 
         // Itera sobre cada tipo de card e busca seus dados no Firestore
         for (const type of cardTypes) {
             // Constrói a referência para a coleção de cards dentro do deck e tipo específicos
-            // Adaptação para o caminho do Firestore no ambiente Canvas
-            const cardsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'Decks', currentSelectedDeckId, 'Main Deck', type.name, 'Cards');
-            // Obtém a contagem e os nomes dos cards da coleção
+            // Caminho ajustado para Firestore padrão: 'Decks/{deckId}/Main Deck/{type.name}/Cards'
+            const cardsCollectionRef = collection(db, 'Decks', currentSelectedDeckId, 'Main Deck', type.name, 'Cards');
+            console.log(`[DEBUG - LoadDeckCards] Buscando cards em: ${cardsCollectionRef.path}`); // Log do caminho
             const { count, cardNames } = await getCollectionData(cardsCollectionRef);
 
             // Atualiza a contagem na UI
@@ -195,6 +208,7 @@ const loadCardsForSelectedDeck = async () => {
             });
             // Torna a seção visível se houver cards ou se for para exibir a contagem zero
             type.sectionElement.classList.remove('hidden');
+            console.log(`[DEBUG - LoadDeckCards] Encontrados ${count} cards para ${type.name}:`, cardNames); // Log dos cards encontrados
         }
         loadingCardsMessage.classList.add('hidden'); // Esconde a mensagem de carregamento após a conclusão
     }
@@ -227,22 +241,24 @@ const handleCardSearch = async () => {
         return;
     }
 
-    const cardTypesToSearch = ['Monstros', 'Magia', 'Armadilhas'];
+    const cardTypesToSearch = ['Monstros', 'Magias', 'Armadilhas']; // Ajustado para 'Magias'
     let cardFound = false;
 
     // Itera sobre os tipos de cards para encontrar o card buscado
     for (const type of cardTypesToSearch) {
         try {
             // Constrói a referência para o documento do card específico
-            // Caminho esperado: Decks/{deckId}/Main Deck/{type}/Cards/{cardName}
-            // Adaptação para o caminho do Firestore no ambiente Canvas
-            const cardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'Decks', currentSelectedDeckId, 'Main Deck', type, 'Cards', cardName);
+            // Caminho ajustado para Firestore padrão: 'Decks/{deckId}/Main Deck/{type}/Cards/{cardName}'
+            const cardDocRef = doc(db, 'Decks', currentSelectedDeckId, 'Main Deck', type, 'Cards', cardName);
+            console.log(`[DEBUG - CardSearch] Tentando buscar card no caminho: ${cardDocRef.path}`); // Log do caminho de busca
             
             const cardDocSnap = await getDoc(cardDocRef);
 
             // Se o card for encontrado
+            console.log(`[DEBUG - CardSearch] Documento '${cardName}' em ${type} existe? ${cardDocSnap.exists()}`); // Log da existência
             if (cardDocSnap.exists()) {
                 const cardData = cardDocSnap.data();
+                console.log(`[DEBUG - CardSearch] Card '${cardName}' encontrado em ${type} com dados:`, cardData); // Log dos dados do card
                 
                 // Constrói o HTML para exibir os detalhes do card
                 let detailsHtml = `
